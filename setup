@@ -14,16 +14,15 @@ function check_prereqs() {
 		echo "a Docker repo owner must be defined in the env var \$DOCKER_REPO_OWNER"
 		return 1
 	fi
-
-	if [[ -e "${LIB_DIR}" ]] ; then
-		echo "the builder library directory ${LIB_DIR} already exists"
-		return 2
-	fi
 }
 
 function clone_libdir() {
-	echo "cloning library"
-	git clone ${LIB_REPO} ${LIB_DIR}
+	if [[ -e "${LIB_DIR}" ]] ; then
+		echo "the builder library directory ${LIB_DIR} already exists; skipping creation"
+	else
+		echo "cloning library"
+		git clone ${LIB_REPO} ${LIB_DIR}
+	fi
 }
 
 function update_excludes() {
