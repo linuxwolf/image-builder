@@ -5,8 +5,6 @@ help:
 	@echo "init-builder .................... intialize building context"
 	@echo "  clean-builder ................. clean building context"
 	@echo "  clean-cache ................... clean cache"
-	@echo ""
-	@echo "stamp: $(STAMP)"
 	
 init-builder: $(DOCKER_CACHE)
 	DOCKER_BUILDER=$(DOCKER_BUILDER) \

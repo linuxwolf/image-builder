@@ -42,7 +42,6 @@ include ${LIB_DIR}/main.mk
 image: ${DOCKER_REPO_OWNER}/${PROJECT}
 
 ${DOCKER_REPO_OWNER}/${PROJECT}: Dockerfile
-
 ---EOF---
 }
 
