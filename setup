@@ -10,40 +10,43 @@ LIB_DIR=${LIB_DIR:=.builder}
 LIB_REPO=${LIB_REPO:-https://github.com/o-p-n/image-builder.git}
 
 function check_prereqs() {
-  if [[ -z "${DOCKER_REPO_OWNER}" ]] ; then
-    echo "a Docker repo owner must be defined in the env var \$DOCKER_REPO_OWNER"
-    return 1
-  fi
+	if [[ -z "${DOCKER_REPO_OWNER}" ]] ; then
+		echo "a Docker repo owner must be defined in the env var \$DOCKER_REPO_OWNER"
+		return 1
+	fi
 
-  if [[ -e "${LIB_DIR}" ]] ; then
-    echo "the builder library directory ${LIB_DIR} already exists"
-    return 2
-  fi
+	if [[ -e "${LIB_DIR}" ]] ; then
+		echo "the builder library directory ${LIB_DIR} already exists"
+		return 2
+	fi
 }
 
 function clone_libdir() {
-  echo "cloning library"
-  git clone ${LIB_REPO} ${LIB_DIR}
+	echo "cloning library"
+	git clone ${LIB_REPO} ${LIB_DIR}
 }
 
 function update_excludes() {
-  echo "updating git excludes"
-  cat << ---EOF--- >> .gitignore
+	echo "updating git excludes"
+	cat << ---EOF--- >> .gitignore
 ${DOCKER_CACHE}/
 ${LIB_DIR}/
 ---EOF---
-  local ignored=$(cat .gitignore | sort | uniq | sed -e 's/^$//')
-  echo "${ignored}" > .gitignore
+	local ignored=$(cat .gitignore | sort | uniq | sed -e 's/^$//')
+	echo "${ignored}" > .gitignore
 }
 
 function setup_make() {
-  echo "Setting up makefile"
-  cat << ---EOF--- > Makefile
+	echo "Setting up makefile"
+	cat << ---EOF--- > Makefile
 PROJECT=${PROJECT}
 DOCKER_REPO_OWNER=${DOCKER_REPO_OWNER}
 DOCKER_CACHE=${DOCKER_CACHE}
 
 include ${LIB_DIR}/main.mk
+
+${LIB_DIR}/main.mk:
+	git clone -q ${LIB_REPO} -b main ${LIB_DIR}
 
 image: ${DOCKER_REPO_OWNER}/${PROJECT}
 
