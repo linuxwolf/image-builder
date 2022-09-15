@@ -7,7 +7,7 @@ DOCKER_REPO_OWNER=${DOCKER_REPO_OWNER:-}
 DOCKER_CACHE=${DOCKER_CACHE:-.cache/docker}
 
 LIB_DIR=${LIB_DIR:=.builder}
-LIB_REPO=${LIB_REPO:-https://o-p-n/image-builder.git}
+LIB_REPO=${LIB_REPO:-https://github.com/o-p-n/image-builder.git}
 
 function check_prereqs() {
   if [[ -z "${DOCKER_REPO_OWNER}" ]] ; then
