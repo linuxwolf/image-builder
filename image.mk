@@ -25,8 +25,8 @@ $(DOCKER_REPO_OWNER)/%: IMAGE_TAG?=$(STAMP)
 $(DOCKER_REPO_OWNER)/%: .cache/docker
 	$(MAKE) init-builder && \
 	docker buildx build --builder $(DOCKER_BUILDER) \
-		--cache-from type=local,src=.cache/docker \
-		--cache-to type=local,dest=.cache/docker,mode=max \
+		--cache-from type=local,src=$(DOCKER_CACHE) \
+		--cache-to type=local,dest=$(DOCKER_CACHE),mode=max \
 		--output type=image,push=true \
 		--platform linux/amd64,linux/arm64 \
 		--tag $(DOCKER_REGISTRY)/$@:$(IMAGE_TAG) \
