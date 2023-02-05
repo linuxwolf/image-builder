@@ -22,7 +22,7 @@ clean-cache:
 
 $(DOCKER_REPO_OWNER)/%: STAMP?=$(shell git rev-parse --verify HEAD || echo latest)
 $(DOCKER_REPO_OWNER)/%: IMAGE_TAG?=$(STAMP)
-$(DOCKER_REPO_OWNER)/%: .cache/docker
+$(DOCKER_REPO_OWNER)/%: $(DOCKER_CACHE)
 	$(MAKE) init-builder && \
 	docker buildx build --builder $(DOCKER_BUILDER) \
 		--cache-from type=local,src=$(DOCKER_CACHE) \
