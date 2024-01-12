@@ -4,7 +4,7 @@ tasks:
   init.llvm-tools:
     run: when_changed
     status:
-      - rustup component list | grep llvm-tools
+      - rustup component list --installed | grep llvm-tools
     cmds:
       - rustup component add llvm-tools
   
@@ -21,7 +21,7 @@ tasks:
       vars:
         - TARGET_TRIPLE
     status:
-      - rustup target list | grep {{ .TARGET_TRIPLE }}
+      - rustup target list --installed | grep {{ .TARGET_TRIPLE }}
     cmds:
       - rustup target add {{ .TARGET_TRIPLE }}
 
