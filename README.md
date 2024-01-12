@@ -1,4 +1,4 @@
-# BUILD TASKS
+# BUILDER TASKS
 
 Tasks for building projects, using [Task](https://taskfile.dev).
 
