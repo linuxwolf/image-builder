@@ -99,6 +99,7 @@ tasks:
       DOCKER_METADATA: '{{ default "target/metadata.json" .DOCKER_METADATA }}'
       DOCKER_SOURCE_EPOCH: '{{ coalesce .DOCKER_SOURCE_EPOCH .DOCKER_DEFAULT_EPOCH }}'
     cmds:
+      - mkdir -p $(dirname {{ .DOCKER_METADATA }})
       - |
         docker buildx build --builder {{ .DOCKER_BUILDER }} \
           --provenance false \
