@@ -7,6 +7,7 @@ vars:
   DOCKER_BUILDER: '{{ default "container-builder" .DOCKER_BUILDER }}'
   DOCKER_REGISTRY_CONTAINER_NAME: '{{ default "registry" .DOCKER_REGISTRY_CONTAINER_NAME }}'
   DOCKER_REGISTRY_CONTAINER_IMAGE: '{{ default "registry:2" .DOCKER_REGISTRY_CONTAINER_IMAGE }}'
+  DOCKER_PLATFORMS: '{{ default "linux/amd64,linux/arm64" .DOCKER_PLATFORMS }}'
 
   IMAGE_TAG: '{{ default "latest" .IMAGE_TAG }}'
 
@@ -100,7 +101,7 @@ tasks:
           --cache-from type=local,src={{ .DOCKER_CACHE }} \
           --cache-to type=local,dest={{ .DOCKER_CACHE }}-new,mode=max \
           --output type=image,push=true \
-          --platform linux/amd64,linux/arm64 \
+          --platform {{ .DOCKER_PLATFORMS }} \
           --tag {{ .DOCKER_REGISTRY }}/{{ .IMAGE_REPOSITORY }}:{{ .IMAGE_TAG }} \
           --build-arg DOCKER_REGISTRY={{ .DOCKER_REGISTRY }} \
           --build-arg STAMP={{ .IMAGE_TAG }} \
