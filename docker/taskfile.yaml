@@ -11,6 +11,8 @@ vars:
 
   IMAGE_TAG: '{{ default "latest" .IMAGE_TAG }}'
 
+  DOCKER_DEFAULT_EPOCH: '{{ now | unixEpoch }}'
+
 tasks:
   init.builder:
     status:
@@ -94,16 +96,21 @@ tasks:
         - IMAGE_TAG
     vars:
       DOCKERFILE: '{{ default "Dockerfile" .DOCKERFILE }}'
+      DOCKER_METADATA: '{{ default "target/metadata.json" .DOCKER_METADATA }}'
+      DOCKER_SOURCE_EPOCH: '{{ coalesce .DOCKER_SOURCE_EPOCH .DOCKER_DEFAULT_EPOCH }}'
     cmds:
+      - mkdir -p $(dirname {{ .DOCKER_METADATA }})
       - |
         docker buildx build --builder {{ .DOCKER_BUILDER }} \
           --provenance false \
           --cache-from type=local,src={{ .DOCKER_CACHE }} \
           --cache-to type=local,dest={{ .DOCKER_CACHE }}-new,mode=max \
           --output type=image,push=true \
+          --metadata-file {{ .DOCKER_METADATA }} \
           --platform {{ .DOCKER_PLATFORMS }} \
           --tag {{ .DOCKER_REGISTRY }}/{{ .IMAGE_REPOSITORY }}:{{ .IMAGE_TAG }} \
           --build-arg DOCKER_REGISTRY={{ .DOCKER_REGISTRY }} \
+          --build-arg SOURCE_DATE_EPOCH={{ .DOCKER_SOURCE_EPOCH }} \
           --build-arg STAMP={{ .IMAGE_TAG }} \
           -f {{ .DOCKERFILE }} \
           .
