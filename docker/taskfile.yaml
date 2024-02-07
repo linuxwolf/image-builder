@@ -7,7 +7,7 @@ vars:
   DOCKER_BUILDER: '{{ default "container-builder" .DOCKER_BUILDER }}'
   DOCKER_REGISTRY_CONTAINER_NAME: '{{ default "registry" .DOCKER_REGISTRY_CONTAINER_NAME }}'
   DOCKER_REGISTRY_CONTAINER_IMAGE: '{{ default "registry:2" .DOCKER_REGISTRY_CONTAINER_IMAGE }}'
-  DOCKER_PLATFORMS: linux/amd64,linux/arm64
+  DOCKER_PLATFORMS: '{{ default "linux/amd64,linux/arm64" .DOCKER_PLATFORMS }}'
 
   IMAGE_TAG: '{{ default "latest" .IMAGE_TAG }}'
 
