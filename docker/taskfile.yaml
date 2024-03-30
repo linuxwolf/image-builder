@@ -117,10 +117,11 @@ tasks:
     deps:
       - image.create
     requires:
-      - DOCKER_OUTPUT_IMAGE
-      - DOCKER_REGISTRY
-      - DOCKER_REPOSITORY
-      - IMAGE_TAG
+      vars:
+        - DOCKER_OUTPUT_IMAGE
+        - DOCKER_REGISTRY
+        - DOCKER_REPOSITORY
+        - IMAGE_TAG
     sources:
       - "{{ .DOCKER_OUTPUT_IMAGE }}"
     cmds:
