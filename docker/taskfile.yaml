@@ -131,6 +131,7 @@ tasks:
       vars:
         - IMAGE_REPOSITORY
         - IMAGE_TAG
+        - DOCKER_OUTPUT_IMAGE
     vars:
       DOCKERFILE: '{{ default "Dockerfile" .DOCKERFILE }}'
       DOCKER_METADATA: '{{ default "target/metadata.json" .DOCKER_METADATA }}'
