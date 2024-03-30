@@ -94,9 +94,6 @@ tasks:
       vars:
         - DOCKER_METADATA
         - DOCKER_OUTPUT_IMAGE
-    generates:
-      - "{{ .DOCKER_OUTPUT_IMAGE }}"
-      - "{{ .DOCKER_OUTPUT_IMAGE }}.tar"
     cmds:
       - mkdir -p {{ dir .DOCKER_METADATA }} {{ dir .DOCKER_OUTPUT_IMAGE }}
         docker buildx build --builder {{ .DOCKER_BUILDER }} \
@@ -123,7 +120,7 @@ tasks:
         - DOCKER_REPOSITORY
         - IMAGE_TAG
     sources:
-      - "{{ .DOCKER_OUTPUT_IMAGE }}"
+      - '{{ .DOCKER_OUTPUT_IMAGE }}'
     cmds:
       - crane push {{ .DOCKER_OUTPUT_IMAGE }} {{ .DOCKER_REGISTRY }}/{{ .DOCKER_REPOSITORY }}:{{ .IMAGE TAG }}
 
