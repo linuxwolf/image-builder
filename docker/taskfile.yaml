@@ -87,6 +87,45 @@ tasks:
       - clean.registry
       - clean.cache
 
+  image.create:
+    deps:
+      - init
+    requires:
+      vars:
+        - DOCKER_METADATA
+        - DOCKER_OUTPUT_IMAGE
+    generates:
+      - "{{ .DOCKER_OUTPUT_IMAGE }}"
+      - "{{ .DOCKER_OUTPUT_IMAGE }}.tar"
+    cmds:
+      - mkdir -p {{ dir .DOCKER_METADATA }} {{ dir .DOCKER_OUTPUT_IMAGE }}
+        docker buildx build --builder {{ .DOCKER_BUILDER }} \
+          --provenance false \
+          --cache-from type=local,src={{ .DOCKER_CACHE }} \
+          --cache-to type=local,dest={{ .DOCKER_CACHE }}-new,mode=max \
+          --output type=oci,dest={{ .DOCKER_OUTPUT_IMAGE }}.tar \
+          --metadata-file {{ .DOCKER_METADATA }} \
+          --platform {{ .DOCKER_PLATFORMS }} \
+          --build-arg DOCKER_REGISTRY={{ .DOCKER_REGISTRY }} \
+          --build-arg SOURCE_DATE_EPOCH={{ .DOCKER_SOURCE_EPOCH }} \
+          -f {{ .DOCKERFILE }} \
+          .
+      - tar xf {{ .DOCKER_OUTPUT_IMAGE }}.tar -C {{ .DOCKER_OUTPUT_IMAGE }}
+      - rm -rf {{ .DOCKER_CACHE }}
+      - mv {{ .DOCKER_CACHE }}-new {{ .DOCKER_CACHE }}
+  image.push:
+    deps:
+      - image.create
+    requires:
+      - DOCKER_OUTPUT_IMAGE
+      - DOCKER_REGISTRY
+      - DOCKER_REPOSITORY
+      - IMAGE_TAG
+    sources:
+      - "{{ .DOCKER_OUTPUT_IMAGE }}"
+    cmds:
+      - crane push {{ .DOCKER_OUTPUT_IMAGE }} {{ .DOCKER_REGISTRY }}/{{ .DOCKER_REPOSITORY }}:{{ .IMAGE TAG }}
+
   image:
     deps:
       - init
@@ -99,20 +138,5 @@ tasks:
       DOCKER_METADATA: '{{ default "target/metadata.json" .DOCKER_METADATA }}'
       DOCKER_SOURCE_EPOCH: '{{ coalesce .DOCKER_SOURCE_EPOCH .DOCKER_DEFAULT_EPOCH }}'
     cmds:
-      - mkdir -p $(dirname {{ .DOCKER_METADATA }})
-      - |
-        docker buildx build --builder {{ .DOCKER_BUILDER }} \
-          --provenance false \
-          --cache-from type=local,src={{ .DOCKER_CACHE }} \
-          --cache-to type=local,dest={{ .DOCKER_CACHE }}-new,mode=max \
-          --output type=image,push=true \
-          --metadata-file {{ .DOCKER_METADATA }} \
-          --platform {{ .DOCKER_PLATFORMS }} \
-          --tag {{ .DOCKER_REGISTRY }}/{{ .IMAGE_REPOSITORY }}:{{ .IMAGE_TAG }} \
-          --build-arg DOCKER_REGISTRY={{ .DOCKER_REGISTRY }} \
-          --build-arg SOURCE_DATE_EPOCH={{ .DOCKER_SOURCE_EPOCH }} \
-          --build-arg STAMP={{ .IMAGE_TAG }} \
-          -f {{ .DOCKERFILE }} \
-          .
-      - rm -rf {{ .DOCKER_CACHE }}
-      - mv {{ .DOCKER_CACHE }}-new {{ .DOCKER_CACHE }}
+      - task: image.create
+      - task: image.push
