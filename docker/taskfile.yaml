@@ -8,10 +8,13 @@ vars:
   DOCKER_REGISTRY_CONTAINER_NAME: '{{ default "registry" .DOCKER_REGISTRY_CONTAINER_NAME }}'
   DOCKER_REGISTRY_CONTAINER_IMAGE: '{{ default "registry:2" .DOCKER_REGISTRY_CONTAINER_IMAGE }}'
   DOCKER_PLATFORMS: '{{ default "linux/amd64,linux/arm64" .DOCKER_PLATFORMS }}'
+  DOCKER_IMAGE: '{{ default "target/image" .DOCKER_IMAGE }}'
+  DOCKER_METADATA: '{{ default "target/metadata.json" .DOCKER_METADATA }}'
+  DOCKER_SOURCE_EPOCH: '{{ default "0" .DOCKER_SOURCE_EPOCH }}'
+  DOCKERFILE: '{{ default "Dockerfile" .DOCKERFILE }}'
 
   IMAGE_TAG: '{{ default "latest" .IMAGE_TAG }}'
 
-  DOCKER_DEFAULT_EPOCH: '{{ now | unixEpoch }}'
 
 tasks:
   init.builder:
@@ -87,32 +90,42 @@ tasks:
       - clean.registry
       - clean.cache
 
-  image:
+  image.prepare:
     deps:
       - init
-    requires:
-      vars:
-        - IMAGE_REPOSITORY
-        - IMAGE_TAG
-    vars:
-      DOCKERFILE: '{{ default "Dockerfile" .DOCKERFILE }}'
-      DOCKER_METADATA: '{{ default "target/metadata.json" .DOCKER_METADATA }}'
-      DOCKER_SOURCE_EPOCH: '{{ coalesce .DOCKER_SOURCE_EPOCH .DOCKER_DEFAULT_EPOCH }}'
     cmds:
-      - mkdir -p $(dirname {{ .DOCKER_METADATA }})
+      - mkdir -p {{ dir .DOCKER_METADATA }} {{ dir .DOCKER_IMAGE }}
+  image.create:
+    deps:
+      - image.prepare
+    cmds:
       - |
         docker buildx build --builder {{ .DOCKER_BUILDER }} \
           --provenance false \
           --cache-from type=local,src={{ .DOCKER_CACHE }} \
           --cache-to type=local,dest={{ .DOCKER_CACHE }}-new,mode=max \
-          --output type=image,push=true \
+          --output type=oci,dest={{ .DOCKER_IMAGE }}.tar \
           --metadata-file {{ .DOCKER_METADATA }} \
           --platform {{ .DOCKER_PLATFORMS }} \
-          --tag {{ .DOCKER_REGISTRY }}/{{ .IMAGE_REPOSITORY }}:{{ .IMAGE_TAG }} \
           --build-arg DOCKER_REGISTRY={{ .DOCKER_REGISTRY }} \
           --build-arg SOURCE_DATE_EPOCH={{ .DOCKER_SOURCE_EPOCH }} \
-          --build-arg STAMP={{ .IMAGE_TAG }} \
           -f {{ .DOCKERFILE }} \
           .
       - rm -rf {{ .DOCKER_CACHE }}
       - mv {{ .DOCKER_CACHE }}-new {{ .DOCKER_CACHE }}
+  image.push:
+    internal: true
+    deps:
+      - task: image.create
+    cmds:
+      - defer: rm -rf {{ .DOCKER_IMAGE }}
+      - mkdir -p {{ .DOCKER_IMAGE }}
+      - tar xf {{ .DOCKER_IMAGE }}.tar -C {{ .DOCKER_IMAGE }}
+      - crane push {{ .DOCKER_IMAGE }} {{ .DOCKER_REGISTRY }}/{{ .IMAGE_REPOSITORY }}:{{ .IMAGE_TAG }}
+
+  image:
+    deps:
+      - task: image.push
+        vars:
+          IMAGE_REPOSITORY: '{{ .IMAGE_REPOSITORY }}'
+          IMAGE_TAG: '{{ .IMAGE_TAG }}'
