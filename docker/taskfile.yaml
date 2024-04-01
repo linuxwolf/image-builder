@@ -8,10 +8,13 @@ vars:
   DOCKER_REGISTRY_CONTAINER_NAME: '{{ default "registry" .DOCKER_REGISTRY_CONTAINER_NAME }}'
   DOCKER_REGISTRY_CONTAINER_IMAGE: '{{ default "registry:2" .DOCKER_REGISTRY_CONTAINER_IMAGE }}'
   DOCKER_PLATFORMS: '{{ default "linux/amd64,linux/arm64" .DOCKER_PLATFORMS }}'
+  DOCKER_IMAGE: '{{ default "target/image" .DOCKER_IMAGE }}'
+  DOCKER_METADATA: '{{ default "target/metadata.json" .DOCKER_METADATA }}'
+  DOCKER_SOURCE_EPOCH: '{{ default "0" .DOCKER_SOURCE_EPOCH }}'
+  DOCKERFILE: '{{ default "Dockerfile" .DOCKERFILE }}'
 
   IMAGE_TAG: '{{ default "latest" .IMAGE_TAG }}'
 
-  DOCKER_DEFAULT_EPOCH: '{{ now | unixEpoch }}'
 
 tasks:
   init.builder:
@@ -87,55 +90,42 @@ tasks:
       - clean.registry
       - clean.cache
 
-  image.create:
+  image.prepare:
     deps:
       - init
-    requires:
-      vars:
-        - DOCKER_METADATA
-        - DOCKER_OUTPUT_IMAGE
     cmds:
-      - mkdir -p {{ dir .DOCKER_METADATA }} {{ dir .DOCKER_OUTPUT_IMAGE }}
+      - mkdir -p {{ dir .DOCKER_METADATA }} {{ dir .DOCKER_IMAGE }}
+  image.create:
+    deps:
+      - image.prepare
+    cmds:
+      - |
         docker buildx build --builder {{ .DOCKER_BUILDER }} \
           --provenance false \
           --cache-from type=local,src={{ .DOCKER_CACHE }} \
           --cache-to type=local,dest={{ .DOCKER_CACHE }}-new,mode=max \
-          --output type=oci,dest={{ .DOCKER_OUTPUT_IMAGE }}.tar \
+          --output type=oci,dest={{ .DOCKER_IMAGE }}.tar \
           --metadata-file {{ .DOCKER_METADATA }} \
           --platform {{ .DOCKER_PLATFORMS }} \
           --build-arg DOCKER_REGISTRY={{ .DOCKER_REGISTRY }} \
           --build-arg SOURCE_DATE_EPOCH={{ .DOCKER_SOURCE_EPOCH }} \
           -f {{ .DOCKERFILE }} \
           .
-      - tar xf {{ .DOCKER_OUTPUT_IMAGE }}.tar -C {{ .DOCKER_OUTPUT_IMAGE }}
       - rm -rf {{ .DOCKER_CACHE }}
       - mv {{ .DOCKER_CACHE }}-new {{ .DOCKER_CACHE }}
   image.push:
+    internal: true
     deps:
-      - image.create
-    requires:
-      vars:
-        - DOCKER_OUTPUT_IMAGE
-        - DOCKER_REGISTRY
-        - DOCKER_REPOSITORY
-        - IMAGE_TAG
-    sources:
-      - '{{ .DOCKER_OUTPUT_IMAGE }}'
+      - task: image.create
     cmds:
-      - crane push {{ .DOCKER_OUTPUT_IMAGE }} {{ .DOCKER_REGISTRY }}/{{ .DOCKER_REPOSITORY }}:{{ .IMAGE TAG }}
+      - defer: rm -rf {{ .DOCKER_IMAGE }}
+      - mkdir -p {{ .DOCKER_IMAGE }}
+      - tar xf {{ .DOCKER_IMAGE }}.tar -C {{ .DOCKER_IMAGE }}
+      - crane push {{ .DOCKER_IMAGE }} {{ .DOCKER_REGISTRY }}/{{ .IMAGE_REPO }}:{{ .IMAGE_TAG }}
 
   image:
-    deps:
-      - init
-    requires:
-      vars:
-        - IMAGE_REPOSITORY
-        - IMAGE_TAG
-        - DOCKER_OUTPUT_IMAGE
-    vars:
-      DOCKERFILE: '{{ default "Dockerfile" .DOCKERFILE }}'
-      DOCKER_METADATA: '{{ default "target/metadata.json" .DOCKER_METADATA }}'
-      DOCKER_SOURCE_EPOCH: '{{ coalesce .DOCKER_SOURCE_EPOCH .DOCKER_DEFAULT_EPOCH }}'
     cmds:
-      - task: image.create
       - task: image.push
+        vars:
+          IMAGE_REPOSITORY: '{{ .IMAGE_REPO }}'
+          IMAGE_TAG: '{{ .IMAGE_TAG }}'
