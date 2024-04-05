@@ -44,6 +44,7 @@ tasks:
 
         docker buildx create --name "{{ .DOCKER_BUILDER }}" \
           --driver docker-container \
+          --driver-opt image=docker.io/moby/buildkit@sha256:00d2c6b8f39ae515e0eadd74f39e71a5efdc94321c9b919692a2aa32deef2bb1 \
           --driver-opt network=host \
           --config "{{ .DOCKER_CONFIG_DIR }}/buildx.toml" \
           --bootstrap
@@ -104,7 +105,7 @@ tasks:
           --provenance false \
           --cache-from type=local,src={{ .DOCKER_CACHE }} \
           --cache-to type=local,dest={{ .DOCKER_CACHE }}-new,mode=max \
-          --output type=oci,dest={{ .DOCKER_IMAGE }}.tar \
+          --output type=oci,dest={{ .DOCKER_IMAGE }}.tar,rewrite-timestamp=true \
           --metadata-file {{ .DOCKER_METADATA }} \
           --platform {{ .DOCKER_PLATFORMS }} \
           --build-arg DOCKER_REGISTRY={{ .DOCKER_REGISTRY }} \
