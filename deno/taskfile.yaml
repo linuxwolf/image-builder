@@ -1,0 +1,80 @@
+version: "3"
+
+vars:
+  DENO_CACHE: '{{ default ".cache/deno" .DENO_CACHE }}'
+  DENO_COVERAGE: '{{ default "coverage" .DENO_COVERAGE }}'
+
+env:
+  DENO_DIR: '{{ .DENO_CACHE }}'
+
+tasks:
+  clean.target: git clean -dfx target
+  clean.coverage: git clean -dfx coverage
+
+  clean:
+    deps:
+      - clean.target
+      - clean.coverage
+
+  test:
+    sources:
+      - src/**/*.ts
+      - test/**/*.ts
+      - deno.json
+      - deno.lock
+    generages:
+      - '{{ .DENO_COVERAGE }}/**/*.json'
+    cmds:
+      - deno test --coverage={{ .DENO_COVERAGE }} --clean test
+
+  checks:
+    deps:
+      - check.fmt
+      - check.lint
+  check.fmt:
+    - deno fmt --check
+  check.lint:
+    - deno lint
+
+  coverage:
+    deps:
+      - coverage.lcov
+      - coverage.html
+  coverage.lcov:
+    sources:
+      - '{{ .DENO_COVERAGE }}/**/*.json'
+    generates:
+      - '{{ .DENO_COVERAGE }}/lcov'
+    deps:
+      - test
+    cmds:
+      - deno coverage --lcov --output={{ .DENO_COVERAGE }}/lcov {{ .DENO_COVERAGE }}
+  coverage.html:
+    sources:
+      - '{{ .DENO_COVERAGE }}/**/*.json'
+    generates:
+      - '{{ .DENO_COVERAGE }}/html/**'
+    deps:
+      - test
+    cmds:
+      - deno coverage --html {{ .DENO_COVERAGE }}
+
+  compile:
+    requires:
+      vars:
+        - TARGET_TRIPLE
+        - TARGET_PLATFORM
+        - ENTRYPOINT
+        - BINARY
+    vars:
+      OUTPUT: 'target/{{ .TARGET_TRIPLE }}/{{ .BINARY }}'
+    sources:
+      - src/**/*.ts
+      - deno.json
+      - deno.lock
+    generates:
+      - '{{ .OUTPUT }}'
+      - 'target/{{ .TARGET_PLATFORM }}'
+    cmds:
+      - deno compile --target={{ .TARGET_TRIPLE }}  --output={{ .OUTPUT }} {{ .ENTRYPOINT }}
+      - cp {{ .OUTPUT }} target/{{ .TARGET_PLATFORM }}
