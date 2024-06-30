@@ -76,5 +76,6 @@ tasks:
       - '{{ .OUTPUT }}'
       - 'target/{{ .TARGET_PLATFORM }}'
     cmds:
+      - mkdir -p target/{{ .TARGET_TRIPLE }}
       - deno compile --target={{ .TARGET_TRIPLE }}  --output={{ .OUTPUT }} {{ .ENTRYPOINT }}
       - cp {{ .OUTPUT }} target/{{ .TARGET_PLATFORM }}
