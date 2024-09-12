@@ -25,7 +25,7 @@ tasks:
     generages:
       - '{{ .DENO_COVERAGE }}/**/*.json'
     cmds:
-      - deno test --coverage={{ .DENO_COVERAGE }} --clean test
+      - deno test --coverage={{ .DENO_COVERAGE }} --junit-path={{ .DENO_COVERAGE }}/report.xml --clean test
 
   checks:
     deps:
