@@ -94,11 +94,11 @@ tasks:
       - Cargo.toml
       - Cargo.lock
     generates:
-      - target/{{ .TARGET_TRIPLE }}/release/serveit
+      - target/{{ .TARGET_TRIPLE }}/release/{{ .TARGET_BINARY }}
     deps:
       - task: init.target
         vars:
           TARGET_TRIPLE: "{{ .TARGET_TRIPLE }}"
     cmds:
       - cargo build --release --target {{ .TARGET_TRIPLE }}
-      - cp target/{{ .TARGET_TRIPLE }}/release/serveit target/{{ .TARGET_PLATFORM }}
+      - cp target/{{ .TARGET_TRIPLE }}/release/{{ .TARGET_BINARY }} target/{{ .TARGET_PLATFORM }}
