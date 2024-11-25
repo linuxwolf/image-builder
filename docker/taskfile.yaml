@@ -3,7 +3,7 @@ version: "3"
 vars:
   DOCKER_CACHE: '{{ default ".cache/docker" .DOCKER_CACHE }}'
 
-  DOCKER_REGISTRY: '{{ default "localhost:5000" .DOCKER_REGISTRY }}'
+  DOCKER_REGISTRY: '{{ default "localhost:12676" .DOCKER_REGISTRY }}'
   DOCKER_BUILDER: '{{ default "container-builder" .DOCKER_BUILDER }}'
   DOCKER_REGISTRY_CONTAINER_NAME: '{{ default "registry" .DOCKER_REGISTRY_CONTAINER_NAME }}'
   DOCKER_REGISTRY_CONTAINER_IMAGE: '{{ default "registry:2" .DOCKER_REGISTRY_CONTAINER_IMAGE }}'
